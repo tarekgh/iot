@@ -15,7 +15,7 @@ namespace Iot.Device.HT16K33
     public class HT16K33 : IDisposable
     {
         const int defaultBusID = 1; //Raspberry Pi 3
-        byte[] buffer = Enumerable.Repeat<byte>(0x00, 16).ToArray();
+        byte[] buffer = Enumerable.Repeat<byte>(0x00, Convert.ToInt32(Address.DEFAULT_BUFSIZE)).ToArray();
         //Buffer buffer
         private I2cDevice _i2CDevice;
 
@@ -113,23 +113,21 @@ namespace Iot.Device.HT16K33
         **/
         public void WriteDisplay()
         {
-
-            /*"""Write display buffer to display hardware."""
-             *
-
-            for i, value in enumerate(self.buffer) :
-
-                self._device.write8(i, value) */
+            foreach (byte value in buffer)
+            { _i2CDevice.WriteByte(value); }
         }
         
         public void Clear()
         {
           /*"""Clear contents of display buffer."""*/
-             buffer = Enumerable.Repeat<byte>(0, 16).ToArray();
+             buffer = Enumerable.Repeat<byte>(0x00, 
+                                              Convert.ToInt32(Address.DEFAULT_BUFSIZE))
+                                              .ToArray();
         }
 
         public void Dispose()
         {
+            _i2CDevice.Dispose();
         }
     }
 }

@@ -7,6 +7,7 @@ namespace Iot.Device.HT16K33
     public enum Address : byte 
     {
         DEFAULT_ADDRESS = 0x70,
+        DEFAULT_BUFSIZE = 0x10,
 
         BLINK_CMD = 0x80,
         BLINK_DISPLAYON = 0x01,

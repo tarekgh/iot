@@ -17,7 +17,9 @@ namespace Iot.Device.HT16K33
 
         SYSTEM_SETUP = 0x20,
         OSCILLATOR = 0x01,
-        CMD_BRIGHTNESS = 0xE0
+
+        CMD_BRIGHTNESS = 0xE0,
+        MAX_BRIGHTNESS = 0x0F
 
     }
 }

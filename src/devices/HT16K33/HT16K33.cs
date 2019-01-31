@@ -107,11 +107,15 @@ namespace Iot.Device.HT16K33
         }
 
 
-
+        /**
+         * WriteDisplay()
+         * Write Display buffer to hardware
+        **/
         public void WriteDisplay()
         {
 
             /*"""Write display buffer to display hardware."""
+             *
 
             for i, value in enumerate(self.buffer) :
 

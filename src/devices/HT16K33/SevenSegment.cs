@@ -1,12 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Device.I2c;
 
 namespace Iot.Device.HT16K33
 {
     public class SevenSegment : HT16K33
     {
         bool _invert = false;
+        public SevenSegment() : base()
+        { }
+
+        public SevenSegment(I2cConnectionSettings i2CConnectionSettings) : base(i2CConnectionSettings)
+        { }
+
+        public SevenSegment(I2cDevice i2CDevice) : base(i2CDevice)
+        { }
+
         /* """Seven segment LED backpack display."""
 
 

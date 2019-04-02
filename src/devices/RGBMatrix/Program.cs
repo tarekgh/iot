@@ -21,24 +21,6 @@ namespace dotnettest
 {
     public class Program
     {
-        private static void DrawRect(RGBMatrix matrix, int x, int y, int width, int height, byte r, byte g, byte b)
-        {
-            for (int j = 0; j < height; j++)
-                for (int i = 0; i < width; i++)
-                {
-                    matrix.SetPixel(i + x, j + y, r, g, b);
-                }
-        }
-
-        private static void DrawRect(RGBMatrix matrix, int x, int y, int length, byte r, byte g, byte b)
-        {
-            for (int j = 0; j < length; j++)
-                for (int i = 0; i < length; i++)
-                {
-                    matrix.SetPixel(i + x, j + y, r, g, b);
-                }
-        }
-
         internal static void Sleep(int milliseconds)
         {
             long now = Stopwatch.GetTimestamp();
@@ -137,35 +119,29 @@ namespace dotnettest
             play = true;
             while (play)
             {
-                DrawRect(matrix, 0,          0, length, 255, 0,   0);
-                DrawRect(matrix, length,     0, length, 0,   255, 0);
-                DrawRect(matrix, 2 * length, 0, length, 0,   0,   255);
-                DrawRect(matrix, 3 * length, 0, length, 255, 255, 0);
+                matrix.FillRectangle(0, 0, length, length, 255, 0, 0);
+                matrix.FillRectangle(length,     0, length, length, 0,   255, 0);
+                matrix.FillRectangle(2 * length, 0, length, length, 0,   0,   255);
+                matrix.FillRectangle(3 * length, 0, length, length, 255, 255, 0);
 
-                DrawRect(matrix, 0,  height, length, 255, 0,   255);
-                DrawRect(matrix, length,  height, length, 255, 255, 255);
-                DrawRect(matrix, 2 * length, height, length, 0,   130, 0);
-                DrawRect(matrix, 3 * length, height, length, 130, 0,   0);
+                matrix.FillRectangle(0,  height, length, length, 255, 0,   255);
+                matrix.FillRectangle(length,  height, length, length, 255, 255, 255);
+                matrix.FillRectangle(2 * length, height, length, length, 0,   130, 0);
+                matrix.FillRectangle(3 * length, height, length, length, 130, 0,   0);
 
-                DrawRect(matrix, 0,  2 * height, length, 0,   0,   128);
-                DrawRect(matrix, length,  2 * height, length, 192, 192, 192);
-                DrawRect(matrix, 2 * length, 2 * height, length, 128, 128, 0);
-                DrawRect(matrix, 3 * length, 2 * height, length, 128, 128, 128);
+                matrix.FillRectangle(0,  2 * height, length, length, 0,   0,   128);
+                matrix.FillRectangle(length,  2 * height, length, length, 192, 192, 192);
+                matrix.FillRectangle(2 * length, 2 * height, length, length, 128, 128, 0);
+                matrix.FillRectangle(3 * length, 2 * height, length, length, 128, 128, 128);
 
-                DrawRect(matrix, 0,  3 * height, length, 255, 0, 0);
-                DrawRect(matrix, length,  3 * height, length,  0, 255, 0);
-                DrawRect(matrix, 2 * length, 3 * height, length,  0,   0,  255);
-                DrawRect(matrix, 3 * length, 3 * height, length,  255,  255,  0);
+                matrix.FillRectangle(0,  3 * height, length, length, 40, 40, 40);
+                matrix.FillRectangle(length,  3 * height, length, length,  80, 80, 80);
+                matrix.FillRectangle(2 * length, 3 * height, length, length,  120,  120,  120);
+                matrix.FillRectangle(3 * length, 3 * height, length, length,  0,  120,  120);
 
-                // DrawRect(matrix, 0,  3 * height, length, 120, 200, 200);
-                // DrawRect(matrix, length,  3 * height, length,  66, 244, 212);
-                // DrawRect(matrix, 2 * length, 3 * height, length,  38,   9,  53);
-                // DrawRect(matrix, 3 * length, 3 * height, length,  30,  40,  50);
-
-                Program.Sleep(100);
+                Thread.Sleep(5000);
             }
         }
-
 
         private static void ScrollText(
                                 RGBMatrix matrix,
@@ -222,7 +198,7 @@ namespace dotnettest
             new CityData("Riyadh", "SA", "Asia/Riyadh")
         } ;
 
-        private static readonly string s_weatherKey = https://openweathermap.org;
+        private static readonly string s_weatherKey = "https://openweathermap.org"; // Need to request a key from https://openweathermap.org
 
         static void Demo3(RGBMatrix matrix)
         {
@@ -249,86 +225,86 @@ namespace dotnettest
 
                 try
                 {
-                while (play)
-                {
-                    string xml = client.DownloadString(weatherUrls[cityIndex]);
-                    XDocument doc = XDocument.Parse(xml);
-                    XElement element = doc.Root.Element("temperature");
-                    string temperature = ((int) Math.Round(Double.Parse(element.Attribute("value").Value))).ToString(CultureInfo.InvariantCulture);
+                    while (play)
+                    {
+                        string xml = client.DownloadString(weatherUrls[cityIndex]);
+                        XDocument doc = XDocument.Parse(xml);
+                        XElement element = doc.Root.Element("temperature");
+                        string temperature = ((int) Math.Round(Double.Parse(element.Attribute("value").Value))).ToString(CultureInfo.InvariantCulture);
 
-                    element = doc.Root.Element("weather");
-                    string description = element.Attribute("value").Value + "                                           ";
+                        element = doc.Root.Element("weather");
+                        string description = element.Attribute("value").Value + "                                           ";
 
-                    element = doc.Root.Element("humidity");
-                    string humidity = element.Attribute("value").Value + element.Attribute("unit").Value + "             ";
-                    element = doc.Root.Element("city").Element("sun");
-                    string sunRise = TimeZoneInfo.ConvertTimeFromUtc(DateTime.Parse(element.Attribute("rise").Value, CultureInfo.InvariantCulture), zones[cityIndex]).ToString("hh:mm tt");
-                    string sunSet = TimeZoneInfo.ConvertTimeFromUtc(DateTime.Parse(element.Attribute("set").Value, CultureInfo.InvariantCulture), zones[cityIndex]).ToString("hh:mm tt");
+                        element = doc.Root.Element("humidity");
+                        string humidity = element.Attribute("value").Value + element.Attribute("unit").Value + "             ";
+                        element = doc.Root.Element("city").Element("sun");
+                        string sunRise = TimeZoneInfo.ConvertTimeFromUtc(DateTime.Parse(element.Attribute("rise").Value, CultureInfo.InvariantCulture), zones[cityIndex]).ToString("hh:mm tt");
+                        string sunSet = TimeZoneInfo.ConvertTimeFromUtc(DateTime.Parse(element.Attribute("set").Value, CultureInfo.InvariantCulture), zones[cityIndex]).ToString("hh:mm tt");
 
-                    int pos = Math.Max(0, (matrix.Width - (s_citiesData[cityIndex].City.Length * font.Width))) / 2;
-                    ScrollText(
-                        matrix,
-                        s_citiesData[cityIndex].City,
-                        font,
-                        matrix.Width - 1,
-                        pos,
-                        128, 128, 128, 0, 0, blue);
+                        int pos = Math.Max(0, (matrix.Width - (s_citiesData[cityIndex].City.Length * font.Width))) / 2;
+                        ScrollText(
+                            matrix,
+                            s_citiesData[cityIndex].City,
+                            font,
+                            matrix.Width - 1,
+                            pos,
+                            128, 128, 128, 0, 0, blue);
 
-                    int y = font.Height;
-                    matrix.DrawText((matrix.Width - (temperature.Length + 1) * font1.Width) / 2, y, temperature + "\u00B0", font1, 255, 255, 0, 0, 0, blue);
+                        int y = font.Height;
+                        matrix.DrawText((matrix.Width - (temperature.Length + 1) * font1.Width) / 2, y, temperature + "\u00B0", font1, 255, 255, 0, 0, 0, blue);
 
-                    y += font1.Height + 2;
-                    matrix.DrawText(2, y, description, font2, 128, 128, 128, 0, 0, blue);
+                        y += font1.Height + 2;
+                        matrix.DrawText(2, y, description, font2, 128, 128, 128, 0, 0, blue);
 
-                    y += font2.Height + 2;
-                    matrix.DrawText(2, y, "humidity: ", font2, 128, 128, 128, 0, 0, blue);
-                    matrix.DrawText(font2.Width * "humidity: ".Length + 2, y, humidity, font2, 255, 255, 0, 0, 0, blue);
+                        y += font2.Height + 2;
+                        matrix.DrawText(2, y, "humidity: ", font2, 128, 128, 128, 0, 0, blue);
+                        matrix.DrawText(font2.Width * "humidity: ".Length + 2, y, humidity, font2, 255, 255, 0, 0, 0, blue);
 
-                    y += font2.Height;
-                    string localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zones[cityIndex]).ToString("hh:mm tt");
-                    matrix.DrawText((matrix.Width - localTime.Length * font.Width) / 2, y, localTime, font, 255, 255, 0, 0, 0, blue);
+                        y += font2.Height;
+                        string localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zones[cityIndex]).ToString("hh:mm tt");
+                        matrix.DrawText((matrix.Width - localTime.Length * font.Width) / 2, y, localTime, font, 255, 255, 0, 0, 0, blue);
 
-                    y += font.Height + 2;
-                    matrix.DrawText(2, y, "Sun Rise: ", font2, 128, 128, 128, 0, 0, blue);
-                    matrix.DrawText(2 + "Sun Rise: ".Length * font2.Width, y, sunRise, font2, 255, 255, 0, 0, 0, blue);
+                        y += font.Height + 2;
+                        matrix.DrawText(2, y, "Sun Rise: ", font2, 128, 128, 128, 0, 0, blue);
+                        matrix.DrawText(2 + "Sun Rise: ".Length * font2.Width, y, sunRise, font2, 255, 255, 0, 0, 0, blue);
 
-                    y += font2.Height + 2;
-                    matrix.DrawText(2, y, "Sun Set:  ", font2, 128, 128, 128, 0, 0, blue);
-                    matrix.DrawText(2 + "Sun Set:  ".Length * font2.Width, y, sunSet, font2, 255, 255, 0, 0, 0, blue);
+                        y += font2.Height + 2;
+                        matrix.DrawText(2, y, "Sun Set:  ", font2, 128, 128, 128, 0, 0, blue);
+                        matrix.DrawText(2 + "Sun Set:  ".Length * font2.Width, y, sunSet, font2, 255, 255, 0, 0, 0, blue);
 
-                    Program.Sleep(4000);
+                        Program.Sleep(4000);
 
-                    ScrollText(
-                        matrix,
-                        s_citiesData[cityIndex].City,
-                        font,
-                        pos,
-                        - (pos + s_citiesData[cityIndex].City.Length * font.Width),
-                        128, 128, 128, 0, 0, blue);
+                        ScrollText(
+                            matrix,
+                            s_citiesData[cityIndex].City,
+                            font,
+                            pos,
+                            - (pos + s_citiesData[cityIndex].City.Length * font.Width),
+                            128, 128, 128, 0, 0, blue);
 
-                    y = font.Height;
-                    matrix.DrawText((matrix.Width - (temperature.Length + 1) * font1.Width) / 2, y, temperature + "\u00B0", font1, 0, 0, blue, 0, 0, blue);
+                        y = font.Height;
+                        matrix.DrawText((matrix.Width - (temperature.Length + 1) * font1.Width) / 2, y, temperature + "\u00B0", font1, 0, 0, blue, 0, 0, blue);
 
-                    y += font1.Height + 2;
-                    matrix.DrawText(2, y, description, font2, 0, 0, blue, 0, 0, blue);
+                        y += font1.Height + 2;
+                        matrix.DrawText(2, y, description, font2, 0, 0, blue, 0, 0, blue);
 
-                    y += font2.Height + 2;
-                    matrix.DrawText(2, y, "humidity: ", font2, 0, 0, blue, 0, 0, blue);
-                    matrix.DrawText(font2.Width * "humidity: ".Length + 2, y, humidity, font2, 0, 0, blue, 0, 0, blue);
+                        y += font2.Height + 2;
+                        matrix.DrawText(2, y, "humidity: ", font2, 0, 0, blue, 0, 0, blue);
+                        matrix.DrawText(font2.Width * "humidity: ".Length + 2, y, humidity, font2, 0, 0, blue, 0, 0, blue);
 
-                    y += font2.Height;
-                    matrix.DrawText((matrix.Width - localTime.Length * font.Width) / 2, y, localTime, font, 0, 0, blue, 0, 0, blue);
+                        y += font2.Height;
+                        matrix.DrawText((matrix.Width - localTime.Length * font.Width) / 2, y, localTime, font, 0, 0, blue, 0, 0, blue);
 
-                    y += font.Height + 2;
-                    matrix.DrawText(2, y, "Sun Rise: ", font2, 0, 0, blue, 0, 0, blue);
-                    matrix.DrawText(2 + "Sun Rise: ".Length * font2.Width, y, sunRise, font2, 0, 0, blue, 0, 0, blue);
+                        y += font.Height + 2;
+                        matrix.DrawText(2, y, "Sun Rise: ", font2, 0, 0, blue, 0, 0, blue);
+                        matrix.DrawText(2 + "Sun Rise: ".Length * font2.Width, y, sunRise, font2, 0, 0, blue, 0, 0, blue);
 
-                    y += font2.Height + 2;
-                    matrix.DrawText(2, y, "Sun Set:  ", font2, 0, 0, blue, 0, 0, blue);
-                    matrix.DrawText(2 + "Sun Set:  ".Length * font2.Width, y, sunSet, font2, 0, 0, blue, 0, 0, blue);
+                        y += font2.Height + 2;
+                        matrix.DrawText(2, y, "Sun Set:  ", font2, 0, 0, blue, 0, 0, blue);
+                        matrix.DrawText(2 + "Sun Set:  ".Length * font2.Width, y, sunSet, font2, 0, 0, blue, 0, 0, blue);
 
-                    cityIndex = (cityIndex + 1) % s_citiesData.Length;
-                }
+                        cityIndex = (cityIndex + 1) % s_citiesData.Length;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -439,7 +415,7 @@ namespace dotnettest
 
                     if (x + bitmaps[bitmapIndex].Width < matrix.Width)
                     {
-                        DrawRect(matrix, x + bitmaps[bitmapIndex].Width, 0, matrix.Width - x - bitmaps[bitmapIndex].Width, matrix.Height, 0, 0, 0);
+                        matrix.FillRectangle(x + bitmaps[bitmapIndex].Width, 0, matrix.Width - x - bitmaps[bitmapIndex].Width, matrix.Height, 0, 0, 0);
                     }
 
                     x--;
@@ -591,12 +567,6 @@ namespace dotnettest
             return hsv2rgb_smooth(new Vector3(a, s, v));
         }
 
-        static Vector3 Circle(Vector2 uv)
-        {
-            Vector2 p = uv - new Vector2(0.5f, 0.5f);
-            float c = p.Length() - 0.5f > 0.0f ? 0.0f : 1.0f;
-            return new Vector3(c, 0.0f, 0.0f);
-        }
 
         static byte Col(float x)
         {
@@ -642,10 +612,16 @@ namespace dotnettest
         {
             Console.WriteLine($"Hello Matrix World!");
 
-            PinMapping mapping = PinMapping.MatrixBonnetMapping64;
+            // PinMapping mapping = PinMapping.MatrixBonnetMapping64;
             // PinMapping mapping = PinMapping.MatrixBonnetMapping32;
             // RGBMatrix matrix = new RGBMatrix(mapping, 32, 32);
-            RGBMatrix matrix = new RGBMatrix(mapping, 64, 64);
+            // RGBMatrix matrix = new RGBMatrix(mapping, 64, 64);
+
+            PinMapping mapping = PinMapping.MatrixBonnetMapping32;
+            // RGBMatrix matrix = new RGBMatrix(mapping, 64, 32);
+            // RGBMatrix matrix = new RGBMatrix(mapping, 96, 32);
+            // RGBMatrix matrix = new RGBMatrix(mapping, 128, 32);
+            RGBMatrix matrix = new RGBMatrix(mapping, 64, 64, 2, 2);
 
             Task.Run(() =>
             {
@@ -654,7 +630,6 @@ namespace dotnettest
 
                 while (scenario != 0)
                 {
-                    matrix.Brightness = 255;
                     switch (scenario)
                     {
                         case 1: Demo1(matrix); break;
@@ -666,7 +641,7 @@ namespace dotnettest
                         case 7: Demo7(matrix); break;
                         case 8: Demo8(matrix); break;
                         default:
-                            scenario = 3;
+                            scenario = 2;
                             break;
                     }
                 }
@@ -718,7 +693,8 @@ namespace dotnettest
 
                 if (cki.KeyChar == 'f')
                 {
-                    matrix.ShowFrameTime = true;
+                    Console.WriteLine($"Frame Time: {matrix.FrameTime} \u00B5s");
+                    Console.WriteLine($"Duration : { matrix.PWMDuration }");
                 }
 
                 if (cki.KeyChar >= '1' && cki.KeyChar <= '9')

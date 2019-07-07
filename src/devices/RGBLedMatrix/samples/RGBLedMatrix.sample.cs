@@ -25,9 +25,32 @@ namespace dotnettest
         private const float DEPTH = 0.5f;
         private static bool play = false;
         private static int scenario = 2;
+        private static bool testing = false;
+        private static byte shade = 0;
 
         private static void Main(string[] args)
         {
+            for (int argIdx = 0; argIdx < args.Length; argIdx++)
+            {
+                string arg = args[argIdx];
+                if (int.TryParse(arg, out int scen))
+                {
+                    if (scen >= 1 && scen <= 9)
+                    {
+                        scenario = scen;
+                    }
+                }
+                else if (arg == "test")
+                {
+                    testing = true;
+                    scenario = 1;
+                }
+                else
+                {
+                    Console.WriteLine($"Unrecognized arg `{arg}` at position {argIdx}");
+                }
+            }
+
             Console.WriteLine($"Hello Matrix World!");
 
             // If using 64x64 with Bonnet (https://www.adafruit.com/product/3211), you can just do
@@ -59,20 +82,36 @@ namespace dotnettest
 
                 while (scenario != 0)
                 {
-                    switch (scenario)
+                    if (testing)
                     {
-                        case 1: Demo1(matrix); break;
-                        case 2: Demo2(matrix); break;
-                        case 3: Demo3(matrix); break;
-                        case 4: Demo4(matrix); break;
-                        case 5: Demo5(matrix); break;
-                        case 6: Demo6(matrix); break;
-                        case 7: Demo7(matrix); break;
-                        case 8: Demo8(matrix); break;
-                        case 9: Demo9(matrix); break;
-                        default:
-                            scenario = 2;
-                            break;
+                        switch (scenario)
+                        {
+                            case 1: Test1(matrix); break;
+                            case 2: Test2(matrix); break;
+                            case 3: Test3(matrix); break;
+                            case 4: Test4(matrix); break;
+                            default:
+                                scenario = 1;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch (scenario)
+                        {
+                            case 1: Demo1(matrix); break;
+                            case 2: Demo2(matrix); break;
+                            case 3: Demo3(matrix); break;
+                            case 4: Demo4(matrix); break;
+                            case 5: Demo5(matrix); break;
+                            case 6: Demo6(matrix); break;
+                            case 7: Demo7(matrix); break;
+                            case 8: Demo8(matrix); break;
+                            case 9: Demo9(matrix); break;
+                            default:
+                                scenario = 2;
+                                break;
+                        }
                     }
                 }
             });
@@ -101,6 +140,16 @@ namespace dotnettest
                 {
                     Console.WriteLine($"Frame Time: {matrix.FrameTime} \u00B5s");
                     Console.WriteLine($"Duration : { matrix.PWMDuration }");
+                }
+
+                if (cki.KeyChar == 'a')
+                {
+                    shade++;
+                }
+
+                if (cki.KeyChar == 'z')
+                {
+                    shade--;
                 }
 
                 if (cki.KeyChar >= '1' && cki.KeyChar <= '9')
@@ -496,6 +545,86 @@ namespace dotnettest
             {
                 Console.WriteLine(e);
             }
+        }
+
+        static void Test(RGBLedMatrix matrix, Func<Vector2, float, Vector3> drawFunc)
+        {
+            Test(matrix, (uv, time) => col(drawFunc(uv, time)));
+        }
+
+        static void Test(RGBLedMatrix matrix, Func<Vector2, float, Color> drawFunc)
+        {
+            play = true;
+
+            try
+            {
+                var sw = Stopwatch.StartNew();
+                while (play)
+                {
+                    float time = sw.ElapsedMilliseconds / 1000f;
+                    for (int ix = 0; ix < matrix.Width; ix++)
+                    {
+                        for (int iy = 0; iy < matrix.Height; iy++)
+                        {
+                            Vector2 uv = new Vector2(ix / (float)(matrix.Width - 1), iy / (float)(matrix.Height - 1));
+                            Color c = drawFunc(uv, time);
+                            matrix.SetPixel(ix, iy, c.R, c.G, c.B);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        static void Test1(RGBLedMatrix matrix)
+        {
+            Test(matrix, (Vector2 uv, float time) =>
+            {
+                return new Vector3(uv.X, 0f, 0f);
+            });
+        }
+
+        static void Test2(RGBLedMatrix matrix)
+        {
+            Test(matrix, (Vector2 uv, float time) =>
+            {
+                return new Vector3(uv.Y, 0f, 0f);
+            });
+        }
+
+        static void Test3(RGBLedMatrix matrix)
+        {
+            float last = -123f;
+            Test(matrix, (Vector2 uv, float time) =>
+            {
+                time /= 100f;
+                float r = abs(mod(time, 2.0f) - 1f);
+                float disp = r * 255f;
+                byte curr = Col(r);
+                if (abs(last - disp) > 0.25)
+                {
+                    last = disp;
+                    Console.WriteLine($"{curr}  [{disp}]");
+                }
+                return new Vector3(r, 0f, 0f);
+            });
+        }
+
+        static void Test4(RGBLedMatrix matrix)
+        {
+            byte lastShade = 123;
+            Test(matrix, (uv, time) =>
+            {
+                if (shade != lastShade)
+                {
+                    Console.WriteLine($"shade = {shade}");
+                    lastShade = shade;
+                }
+                return Color.FromArgb(shade, 0, 0);
+            });
         }
 
         private static Vector3 tex(Vector2 p, float time)

@@ -235,9 +235,9 @@ namespace Iot.Device.LEDMatrix
                 return;
             }
 
-            red = s_gamma[red];
-            green = s_gamma[green];
-            blue = s_gamma[blue];
+            //red = s_gamma[red];
+            //green = s_gamma[green];
+            //blue = s_gamma[blue];
 
             if (_chainRows > 1)
             {

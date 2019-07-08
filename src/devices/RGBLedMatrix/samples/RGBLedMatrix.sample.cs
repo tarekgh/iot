@@ -21,11 +21,36 @@ namespace dotnettest
 {
     public class Program
     {
+        private const float DARKNESS = 0.8f;
+        private const float DEPTH = 0.5f;
         private static bool play = false;
         private static int scenario = 2;
+        private static bool testing = false;
+        private static byte shade = 0;
 
         private static void Main(string[] args)
         {
+            for (int argIdx = 0; argIdx < args.Length; argIdx++)
+            {
+                string arg = args[argIdx];
+                if (int.TryParse(arg, out int scen))
+                {
+                    if (scen >= 1 && scen <= 9)
+                    {
+                        scenario = scen;
+                    }
+                }
+                else if (arg == "test")
+                {
+                    testing = true;
+                    scenario = 1;
+                }
+                else
+                {
+                    Console.WriteLine($"Unrecognized arg `{arg}` at position {argIdx}");
+                }
+            }
+
             Console.WriteLine($"Hello Matrix World!");
 
             // If using 64x64 with Bonnet (https://www.adafruit.com/product/3211), you can just do
@@ -37,7 +62,7 @@ namespace dotnettest
             // If not using Bonnet, will need to provide the manual GPIO mapping using PinMapping
 
             // To create RGBLedMatrix for 32x32 panel, do the following
-            RGBLedMatrix matrix = new RGBLedMatrix(mapping, 32, 32);
+            // RGBLedMatrix matrix = new RGBLedMatrix(mapping, 32, 32);
 
             // To create RGBLedMatrix for 64x64 panel, do the following
             // RGBLedMatrix matrix = new RGBLedMatrix(mapping, 64, 64);
@@ -49,7 +74,7 @@ namespace dotnettest
             // RGBLedMatrix matrix = new RGBLedMatrix(mapping, 128, 32);
 
             // If you chain 4 32x32 panels having 2 rows chaining (2 panels in first row an d2 panels in second row).
-            // RGBLedMatrix matrix = new RGBLedMatrix(mapping, 64, 64, 2, 2);
+            RGBLedMatrix matrix = new RGBLedMatrix(mapping, 64, 64, 2, 2);
 
             Task.Run(() =>
             {
@@ -57,19 +82,36 @@ namespace dotnettest
 
                 while (scenario != 0)
                 {
-                    switch (scenario)
+                    if (testing)
                     {
-                        case 1: Demo1(matrix); break;
-                        case 2: Demo2(matrix); break;
-                        case 3: Demo3(matrix); break;
-                        case 4: Demo4(matrix); break;
-                        case 5: Demo5(matrix); break;
-                        case 6: Demo6(matrix); break;
-                        case 7: Demo7(matrix); break;
-                        case 8: Demo8(matrix); break;
-                        default:
-                            scenario = 2;
-                            break;
+                        switch (scenario)
+                        {
+                            case 1: Test1(matrix); break;
+                            case 2: Test2(matrix); break;
+                            case 3: Test3(matrix); break;
+                            case 4: Test4(matrix); break;
+                            default:
+                                scenario = 1;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch (scenario)
+                        {
+                            case 1: Demo1(matrix); break;
+                            case 2: Demo2(matrix); break;
+                            case 3: Demo3(matrix); break;
+                            case 4: Demo4(matrix); break;
+                            case 5: Demo5(matrix); break;
+                            case 6: Demo6(matrix); break;
+                            case 7: Demo7(matrix); break;
+                            case 8: Demo8(matrix); break;
+                            case 9: Demo9(matrix); break;
+                            default:
+                                scenario = 2;
+                                break;
+                        }
                     }
                 }
             });
@@ -98,6 +140,16 @@ namespace dotnettest
                 {
                     Console.WriteLine($"Frame Time: {matrix.FrameTime} \u00B5s");
                     Console.WriteLine($"Duration : { matrix.PWMDuration }");
+                }
+
+                if (cki.KeyChar == 'a')
+                {
+                    shade++;
+                }
+
+                if (cki.KeyChar == 'z')
+                {
+                    shade--;
                 }
 
                 if (cki.KeyChar >= '1' && cki.KeyChar <= '9')
@@ -180,7 +232,7 @@ namespace dotnettest
             }
         }
 
-        private static readonly string s_weatherKey = "Please request a key from openweathermap.org";
+        private static readonly string s_weatherKey = "a72c87664a5aaa60324d65f20da202a7";
 
         static void Demo3(RGBLedMatrix matrix)
         {
@@ -467,12 +519,294 @@ namespace dotnettest
             }
         }
 
-        private static Vector3 clamp(Vector3 c, float a, float b)
+        static void Demo9(RGBLedMatrix matrix)
         {
-            return new Vector3(Math.Clamp(c.X, a, b), Math.Clamp(c.Y, a, b), Math.Clamp(c.Z, a, b));
+            play = true;
+
+            try
+            {
+                var sw = Stopwatch.StartNew();
+                while (play)
+                {
+                    float time = sw.ElapsedMilliseconds / 1000f;
+                    for (int ix = 0; ix < matrix.Width; ix++)
+                    {
+                        for (int iy = 0; iy < matrix.Height; iy++)
+                        {
+                            Vector2 uv = new Vector2(ix / (float)(matrix.Width - 1), iy / (float)(matrix.Height - 1));
+                            Vector3 cv = Tunnel(uv, time/10);
+                            Color c = col(cv);//ToSRGB(cv.X, cv.Y, cv.Z);
+                            matrix.SetPixel(ix, iy, c.R, c.G, c.B);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
-        private static float mod(float a, float b)
+        static void Test(RGBLedMatrix matrix, Func<Vector2, float, Vector3> drawFunc)
+        {
+            Test(matrix, (uv, time) => col(drawFunc(uv, time)));
+        }
+
+        static void Test(RGBLedMatrix matrix, Func<Vector2, float, Color> drawFunc)
+        {
+            play = true;
+
+            try
+            {
+                var sw = Stopwatch.StartNew();
+                while (play)
+                {
+                    float time = sw.ElapsedMilliseconds / 1000f;
+                    for (int ix = 0; ix < matrix.Width; ix++)
+                    {
+                        for (int iy = 0; iy < matrix.Height; iy++)
+                        {
+                            Vector2 uv = new Vector2(ix / (float)(matrix.Width - 1), iy / (float)(matrix.Height - 1));
+                            Color c = drawFunc(uv, time);
+                            matrix.SetPixel(ix, iy, c.R, c.G, c.B);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        static void Test1(RGBLedMatrix matrix)
+        {
+            Test(matrix, (Vector2 uv, float time) =>
+            {
+                return new Vector3(uv.X, 0f, 0f);
+            });
+        }
+
+        static void Test2(RGBLedMatrix matrix)
+        {
+            Test(matrix, (Vector2 uv, float time) =>
+            {
+                return new Vector3(uv.Y, 0f, 0f);
+            });
+        }
+
+        static void Test3(RGBLedMatrix matrix)
+        {
+            float last = -123f;
+            Test(matrix, (Vector2 uv, float time) =>
+            {
+                time /= 100f;
+                float r = abs(mod(time, 2.0f) - 1f);
+                float disp = r * 255f;
+                byte curr = Col(r);
+                if (abs(last - disp) > 0.25)
+                {
+                    last = disp;
+                    Console.WriteLine($"{curr}  [{disp}]");
+                }
+                return new Vector3(r, 0f, 0f);
+            });
+        }
+
+        static void Test4(RGBLedMatrix matrix)
+        {
+            byte lastShade = 123;
+            Test(matrix, (uv, time) =>
+            {
+                if (shade != lastShade)
+                {
+                    Console.WriteLine($"shade = {shade}");
+                    lastShade = shade;
+                }
+                return Color.FromArgb(shade, 0, 0);
+            });
+        }
+
+        private static Vector3 tex(Vector2 p, float time)
+        {
+            float shift = time;
+            p.X += shift;
+            float lightInvScale = .8f;
+            float light = shift + 2f * (1.0f + sin(time * 2f * pi / 10f));
+            float n = (0.6f * noise(vec(p * 23.0f, 0.0f)) + 0.4f * noise(vec(p * 3.0f, 0.0f)));
+            float lightInfluence = smoothstep(0.0f, 1.0f, abs(light - p.X) * lightInvScale);
+            Vector3 rainbowPattern = hsv2rgb_smooth(vec(sin(p.X + p.Y * 0.1f + sin(2f * p.Y + p.X)), 1.0f, 1.0f));
+            Vector3 lightColor = hsv2rgb_smooth(vec(0.5f * (1f + sin(time * 2f * pi / 111f)), 1.0f, 1.0f));
+            Vector3 rainbowWithLight = mix(lightColor, rainbowPattern, lightInfluence);
+            Vector3 patternSecondColor = vec3(0.2f * (1f - lightInfluence));
+            return clamp(mix(rainbowWithLight, patternSecondColor, n), 0.0f, 1.0f);
+        }
+        static float sin(float x)
+        {
+            return (float)Math.Sin(x);
+        }
+
+        static float cos(float x)
+        {
+            return (float)Math.Cos(x);
+        }
+
+        const float pi = (float)Math.PI;
+        private static Vector3 Tunnel(Vector2 uv, float time)
+        {
+            float angle = 2f * pi * time / 40.0f;
+            Vector2 halfScreen = vec(0.5f, 0.5f);
+            uv = halfScreen + rot2d(uv - halfScreen, angle);
+
+            float eyeX = 0.7f + 0.2f * sin(2f * pi * time / 37f);
+            Vector3 eye = vec(eyeX, 0.5f, -DEPTH);
+            Vector2 p = uv;
+            // x-mir: (0-5, 0-1)
+            p = vec(0.5f - abs(p.X - 0.5f), p.Y);
+            // WALL = EYE + (P - EYE) * c
+            // now, we need to find c
+
+            Vector3 p3 = vec(p, 0.0f);
+            Vector3 peye = p3 - eye;
+            float c = - eye.X / peye.X;
+
+            // put everything in the equation
+            Vector3 wall = peye + c * peye;
+
+            // map wall coords into tex coords
+            //   both y's align
+            //   z aligns with tex's x
+            //   x is always 0 because wall is flat so it needs to be 0 somewhere
+            //     we could have chosen something more complex where wall goes diagonal but why complicate life
+            p = vec(wall.Z, wall.Y);
+
+            p *= 0.6f;
+
+            return tex(p, time) *  pow(abs(0.5f - uv.X) / 0.5f, DARKNESS);
+        }
+
+        private static float pow(float x, float y)
+        {
+            return (float)Math.Pow(x, y);
+        }
+
+        private static Vector2 rot2d(Vector2 x, float angle)
+        {
+            float s = sin(angle);
+            float c = cos(angle);
+            return new Vector2(c * x.X - s * x.Y, s * x.X + c * x.Y);
+        }
+
+       // hash, noise, hsv2rgb_smooth are ported from iq on shadertoy (MIT)
+        private static float hash(Vector3 p)
+        {
+            p = fract(p * 0.3183099f + vec3(.1f));
+            p *= 17.0f;
+            return fract(p.X * p.Y * p.Z * (p.X + p.Y + p.Z));
+        }
+
+        private static float noise(Vector3 x)
+        {
+            Vector3 p = floor(x);
+            Vector3 f = fract(x);
+            f = f * f * (vec3(3.0f) - 2.0f * f);
+
+            return mix(mix(mix(hash(p + vec(0,0,0)),
+                               hash(p + vec(1,0,0)),
+                               f.X),
+                           mix(hash(p + vec(0,1,0)),
+                               hash(p + vec(1,1,0)),
+                               f.X),
+                           f.Y),
+                       mix(mix(hash(p + vec(0,0,1)),
+                               hash(p + vec(1,0,1)),
+                               f.X),
+                           mix(hash(p + vec(0,1,1)),
+                               hash(p + vec(1,1,1)),
+                               f.X),
+                           f.Y),
+                       f.Z);
+        }
+
+        static float fract(float x)
+        {
+            return x - floor(x);
+        }
+
+        static Vector3 fract(Vector3 x)
+        {
+            return new Vector3(
+                fract(x.X),
+                fract(x.Y),
+                fract(x.Z)
+            );
+        }
+
+        static Vector3 vec(Color c)
+        {
+            return new Vector3(c.R, c.G, c.B);
+        }
+
+        static Vector3 vec(float x, float y, float z)
+        {
+            return new Vector3(x, y, z);
+        }
+
+        static Vector3 vec(float x, Vector2 vy)
+        {
+            return new Vector3(x, vy.X, vy.Y);
+        }
+
+        static Vector3 vec(Vector2 vx, float y)
+        {
+            return new Vector3(vx.X, vx.Y, y);
+        }
+
+        static Vector2 vec2(float x)
+        {
+            return new Vector2(x, x);
+        }
+        static Vector3 vec3(float x)
+        {
+            return new Vector3(x, x, x);
+        }
+
+        static Vector2 vec(float x, float y)
+        {
+            return new Vector2(x, y);
+        }
+
+        static float min(float a, float b)
+        {
+            return Math.Min(a, b);
+        }
+
+        static Vector2 min(Vector2 a, Vector2 b)
+        {
+            return new Vector2(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));
+        }
+
+        static Vector3 min(Vector3 a, Vector3 b)
+        {
+            return new Vector3(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Min(a.Z, b.Z));
+        }
+
+        static float max(float a, float b)
+        {
+            return Math.Max(a, b);
+        }
+
+        static Vector2 max(Vector2 a, Vector2 b)
+        {
+            return new Vector2(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y));
+        }
+
+        static Vector3 max(Vector3 a, Vector3 b)
+        {
+            return new Vector3(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y), Math.Max(a.Z, b.Z));
+        }
+
+        static float mod(float a, float b)
         {
             float ret = a % b;
             if (ret < 0)
@@ -483,24 +817,103 @@ namespace dotnettest
             return ret;
         }
 
-        private static Vector3 mod(Vector3 a, float b)
+        static Vector3 mod(Vector3 a, float b)
         {
             return new Vector3(mod(a.X, b), mod(a.Y, b), mod(a.Z, b));
+        }
+
+        static float floor(float x)
+        {
+            return (float)Math.Floor(x);
+        }
+
+        static Vector3 floor(Vector3 x)
+        {
+            return new Vector3(
+                floor(x.X),
+                floor(x.Y),
+                floor(x.Z)
+            );
+        }
+
+        static float sqrt(float x)
+        {
+            return (float)Math.Sqrt(x);
+        }
+
+        static float length(float x)
+        {
+            return x;
+        }
+
+        static float length(Vector2 x)
+        {
+            return sqrt(x.X * x.X + x.Y * x.Y);
+        }
+
+        static float length(Vector3 x)
+        {
+            return sqrt(x.X * x.X + x.Y * x.Y + x.Z * x.Z);
+        }
+
+        static float abs(float x)
+        {
+            return Math.Abs(x);
+        }
+
+        static Vector3 abs(Vector3 x)
+        {
+            return new Vector3(
+                abs(x.X),
+                abs(x.Y),
+                abs(x.Z)
+            );
+        }
+
+        static float clamp(float x, float min, float max)
+        {
+            return (float)Math.Clamp(x, min, max);
+        }
+
+        static Vector3 clamp(Vector3 x, float min, float max)
+        {
+            return new Vector3(
+                clamp(x.X, min, max),
+                clamp(x.Y, min, max),
+                clamp(x.Z, min, max)
+            );
+        }
+
+
+        static float clamp01(float x)
+        {
+            return clamp(x, 0f, 1f);
+        }
+
+        static float lerp(float x, float xmin, float xmax, float ymin, float ymax)
+        {
+            float xrange = xmax - xmin;
+            float yrange = ymax - ymin;
+            return (x - xmin) * yrange / xrange + ymin;
+        }
+
+        static float mix(float x, float y, float a)
+        {
+            return x * (1f - a) + y * a;
+        }
+
+        static Vector3 mix(Vector3 x, Vector3 y, float a)
+        {
+            return new Vector3(
+                mix(x.X, y.X, a),
+                mix(x.Y, y.Y, a),
+                mix(x.Z, y.Z, a)
+            );
         }
 
         private static Vector3 Add(Vector3 v, float s)
         {
             return new Vector3(v.X + s, v.Y + s, v.Z + s);
-        }
-
-        private static Vector3 abs(Vector3 vector)
-        {
-            return new Vector3(Math.Abs(vector.X), Math.Abs(vector.Y), Math.Abs(vector.Z));
-        }
-
-        private static Vector3 mix(Vector3 a, Vector3 b, float f)
-        {
-            return a * (1 - f) + b * f;
         }
 
         private static Vector3 hsv2rgb_smooth(Vector3 c)
@@ -566,6 +979,11 @@ namespace dotnettest
             float v = r * 2.0f;
 
             return hsv2rgb_smooth(new Vector3(a, s, v));
+        }
+
+        private static Color col(Vector3 v)
+        {
+            return Color.FromArgb(Col(v.X), Col(v.Y), Col(v.Z));
         }
 
         private static byte Col(float x)
